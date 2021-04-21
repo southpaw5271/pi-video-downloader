@@ -24,9 +24,34 @@
         <div class="col-2">
             <button class="btn btn-primary" onclick="submitURL()">Download</button>
         </div>
-    </form>
     </div>
-    <div id="results" class="row"></div>
+    <div id="results" class="row">
+	    <table class="table table-striped" id="downloads">
+		    <thead>
+			    	<th></th>
+				<th>Video Name</th>
+				<th>Video URL</th>
+				<th>Status</th>
+				<th>Thread Name</th>
+				<th></th>
+		    </thead>
+		    <tbody>
+			{% for item in videos %}
+				<tr>
+					<td><button class="btn btn-danger btn-sm" onclick="deleteVideo('{{item['thread']}}')">X</button></td>
+					<td>{{item['title']}}</td>
+					<td>{{item['url']}}</td>
+					<td id="{{item['thread']}}">{{item['status']}}</td>
+					<td>{{item['thread']}}</td>
+					<td><button class="btn btn-success" onclick="checkStatus('{{item['thread']}}')">Check</button></td>
+				</tr>
+			{% endfor %}
+		    </tbody>
+	    </table>
+    </div>
+    <div class="row">
+	    <button class="btn btn-success" onclick="checkStatus('test123')">Check Status</button>
+    </div>
 </div>
     <!-- Optional JavaScript; choose one of the two! -->
 
@@ -40,6 +65,21 @@
     -->
   </body>
   <script>
+	function checkStatus(name){
+		var cellID = '#' + name;
+		$.ajax({
+			type: 'GET',
+			url: '/download/status/'+name,
+			success: function(data) {
+			    $(cellID).text(data["status"]);
+			    console.log(data);
+			},
+			contentType: "application/json",
+			dataType: 'json'
+		 });
+	 }
+
+
       function submitURL(){
         request = {
             url: $("#url_input").val()
@@ -50,11 +90,37 @@
             url: '/download',
             data: JSON.stringify(request), // or JSON.stringify ({name: 'jonas'}),
             success: function(data) {
-                $("#results").html(data);
+			var title = data['title'];
+			var thread_name = data["thread_name"];
+			var status = "Downloading";
+			var newRow = '<tr><td><button class="btn btn-danger btn-sm" onclick="deleteVideo(\''+thread_name+'\')">X</button></td><td>'+ title +'</td><td>'+ request["url"] +'</td><td id="'+thread_name+'">'+ status +'</td><td>'+ thread_name +'</td><td><button class="btn btn-success" onclick="checkStatus(\''+thread_name+'\')">Check</button></td></tr>'
+               $("#downloads > tbody:last-child").append(newRow);
+			console.log(data);
             },
             contentType: "application/json",
             dataType: 'json'
         });
       }
+
+	 function deleteVideo(name){
+		var cellID = '#' + name;
+		$.ajax({
+			type: 'GET',
+			url: '/delete/'+name,
+			success: function(data) {
+			    $(cellID).text("Deleted");
+			    console.log(data);
+
+			},
+			contentType: "application/json",
+			dataType: 'json'
+		 });
+	 }
+
+
+
+	 
+
+
   </script>
 </html>
