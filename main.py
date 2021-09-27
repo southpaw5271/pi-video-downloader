@@ -52,13 +52,14 @@ def download_video():
     # Get JSON body
     req = request.get_json()
     url = req["url"]
+    audioOnly = req["audioOnly"]
     # Get video info
     title = tasks.get_video_info(url)
     # Set random thread name
     name = random_name()
     # name = "test123"
     # Open new thread with random name
-    thread = Thread(target=tasks.threaded_download, args=(url,), name=name)
+    thread = Thread(target=tasks.threaded_download, args=(url, audioOnly), name=name)
     thread.daemon = True
     # Start the thread and download the video
     thread.start()
@@ -99,6 +100,54 @@ def check_thread(name):
         "status": status,
         "name": name
     })
+
+
+@app.route("/download/listAll", methods=["GET"])
+def list_all_downloads():
+    conn = sqlite3.connect('pvd.db')
+    c = conn.cursor()
+    c.execute("SELECT * FROM downloads")
+    result = c.fetchall()
+    data = []
+    for row in result:
+        data.append({
+            "name": row[0],
+            "url": row[1],
+            "thread": row[2],
+            "date": row[3],
+            "status": row[4]
+        })
+    c.close()
+    conn.close()
+    return jsonify(data)
+
+@app.route("/download/checkAll", methods=["GET"])
+def check_all_threads():
+    conn = sqlite3.connect('pvd.db')
+    c = conn.cursor()
+    c.execute("SELECT * FROM downloads WHERE status = 'Downloading'")
+    result = c.fetchall()
+    data = []
+    for row in result:
+        data.append({
+            "name": row[0],
+            "url": row[1],
+            "thread": row[2],
+            "date": row[3],
+            "status": row[4]
+        })
+        for t in enumerate():
+            try:
+                if t.getName() == row[0]:
+                    status = "Downloading"
+                    if status != row[4]:
+                        c.execute("UPDATE downloads SET status = ? WHERE thread = ?", [status, row[2]])
+                        conn.commit()
+            except:
+                pass
+    c.close()
+    conn.close()
+    return jsonify(data)
 
 
 @app.route("/delete/<name>", methods=["GET"])
